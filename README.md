@@ -11,224 +11,170 @@ There are two ways you can use Drupal VM:
   1. With Vagrant and VirtualBox.
   2. With Docker.
 
-To read more about using Drupal VM with Vagrant, please read the [Drupal VM Vagrant documentation](http://docs.drupalvm.com/en/latest/docs/vagrant).
+The rest of this README assumes you're using Vagrant and VirtualBox (this is currently the most flexible and widely-used method of using Drupal VM). If you'd like to use Drupal VM with Docker, please read the [Drupal VM Docker documentation](http://docs.drupalvm.com/en/latest/other/docker/).
 
-  - You can quickly install a Drupal site (any version) using the official [`geerlingguy/drupal-vm`](https://hub.docker.com/r/geerlingguy/drupal-vm/) image.
-  - You can build a customized local instance using Docker, pulling the official [`geerlingguy/drupal-vm`](https://hub.docker.com/r/geerlingguy/drupal-vm/) image.
-  - You can 'bake your own' customized Drupal VM Docker image and reuse it or share it with your team.
+Drupal VM installs the following on an Ubuntu 16.04 (by default) linux VM:
 
-> **Docker support is currently experimental**, so unless you're already familiar with Docker, it might be best to wait until later versions of Drupal VM are released with more stable support.
+  - Apache 2.4.x (or Nginx)
+  - PHP 7.1.x (configurable)
+  - MySQL 5.7.x (or MariaDB, or PostgreSQL)
+  - Drupal 7 or 8
+  - Optional:
+    - Drupal Console
+    - Drush
+    - Varnish
+    - Apache Solr
+    - Elasticsearch
+    - Node.js
+    - Selenium, for testing your sites via Behat
+    - Ruby
+    - Memcached
+    - Redis
+    - SQLite
+    - Blackfire, XHProf, or Tideways for profiling your code
+    - XDebug, for debugging your code
+    - Adminer, for accessing databases directly
+    - Pimp my Log, for easy viewing of log files
+    - MailHog, for catching and debugging email
 
-## Using the latest
+It should take 5-10 minutes to build or rebuild the VM from scratch on a decent broadband connection.
 
-To use the latest stable version with http and mysql, run
+Please read through the rest of this README and the [Drupal VM documentation](http://docs.drupalvm.com/) for help getting Drupal VM configured and integrated with your workflow.
 
-    docker run -d -p 80:80 -p 3306:3306 --name drupalvm geerlingguy/drupal-vm
-where the standard server ports, 80 and 3306, will be exposed on your host machine.
+## Documentation
 
-If you want to use an alternate port, change the port mapping such as 
+Full Drupal VM documentation is available at http://docs.drupalvm.com/
 
-    docker run -p 8080:80 ...
-will serve your server on your host's port 8080 since the -p syntax is
-host-port:container-port.
+## Customizing the VM
 
-Make sure to give your containers explicit names using --name, such as
+There are a couple places where you can customize the VM for your needs:
 
-    docker run -d -p 8080:80 --name drupalvm geerlingguy/drupal-vm
+  - `config.yml`: Override any of the default VM configuration from `default.config.yml`; customize almost any aspect of any software installed in the VM (more about [configuring Drupal VM](http://docs.drupalvm.com/en/latest/getting-started/configure-drupalvm/).
+  - `drupal.composer.json` or `drupal.make.yml`: Contains configuration for the Drupal core version, modules, and patches that will be downloaded on Drupal's initial installation (you can build using Composer, Drush make, or your own codebase).
 
-To view the logs, stop, or re-start the container:
+If you want to switch from Drupal 8 (default) to Drupal 7 on the initial install, do the following:
 
-    docker logs -f drupalvm
-        ( Ctrl-C to exit logs action )
+  1. Switch to using a [Drush Make file](http://docs.drupalvm.com/en/latest/deployment/drush-make/).
+  1. Update the Drupal `version` and `core` inside your `drupal.make.yml` file.
+  2. Set `drupal_major_version: 7` inside `config.yml`.
 
-    docker stop drupalvm
+## Quick Start Guide
 
-    docker start drupalvm
+This Quick Start Guide will help you quickly build a Drupal 8 site on the Drupal VM using Composer with `drupal-project`. You can also use Drupal VM with [Composer](http://docs.drupalvm.com/en/latest/deployment/composer/), a [Drush Make file](http://docs.drupalvm.com/en/latest/deployment/drush-make/), with a [Local Drupal codebase](http://docs.drupalvm.com/en/latest/deployment/local-codebase/), or even a [Drupal multisite installation](http://docs.drupalvm.com/en/latest/deployment/multisite/).
 
-## Interacting with the server
-To get access to the command line, you can exec into the container::
+If you want to install a Drupal 8 site locally with minimal fuss, just:
 
-    docker exec -i drupalvm /bin/bash
-Note: The -i is required for interactive use of the bash terminal.
+  1. Install [Vagrant](https://www.vagrantup.com/downloads.html) and [VirtualBox](https://www.virtualbox.org/wiki/Downloads).
+  2. Download or clone this project to your workstation.
+  3. `cd` into this project directory and run `vagrant up`.
 
-## Single Command
-To run a simple, one-shot command, such as printing your working directory, pass the command as
-arguments to bash, such as:
+But Drupal VM allows you to build your site exactly how you like, using whatever tools you need, with almost infinite flexibility and customization!
 
-    docker exec drupalvm /bin/bash -c "pwd"
-The -i is not needed in this case.
+### 1 - Install Vagrant and VirtualBox
 
-## Interacting with the Server
-In order to attach and interact with the server, add -it when starting the container, such as
+Download and install [Vagrant](https://www.vagrantup.com/downloads.html) and [VirtualBox](https://www.virtualbox.org/wiki/Downloads).
 
-    docker run -d -it -p 80:80 -p 3306:3306 --name drupalvm geerlingguy/drupal-vm
-With that you can attach and interact at any time using
+You can also use an alternative provider like Parallels or VMware. (Parallels Desktop 11+ requires the "Pro" or "Business" edition and the [Parallels Provider](http://parallels.github.io/vagrant-parallels/), and VMware requires the paid [Vagrant VMware integration plugin](http://www.vagrantup.com/vmware)).
 
-    docker attach drupalvm
-and then Control-p Control-q to detach.
+Notes:
 
-For remote access, configure your Docker daemon to use a tcp socket (such as -H tcp://0.0.0.0:2375)
-and attach from another machine:
+  - **For faster provisioning** (macOS/Linux only): *[Install Ansible](http://docs.ansible.com/intro_installation.html) on your host machine, so Drupal VM can run the provisioning steps locally instead of inside the VM.*
+  - **For stability**: Because every version of VirtualBox introduces changes to networking, for the best stability, you should install Vagrant's `vbguest` plugin: `vagrant plugin install vagrant-vbguest`.
+  - **NFS on Linux**: *If NFS is not already installed on your host, you will need to install it to use the default NFS synced folder configuration. See guides for [Debian/Ubuntu](https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nfs-mount-on-ubuntu-14-04), [Arch](https://wiki.archlinux.org/index.php/NFS#Installation), and [RHEL/CentOS](https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nfs-mount-on-centos-6).*
+  - **Versions**: *Make sure you're running the latest releases of Vagrant, VirtualBox, and Ansible—as of early 2018, Drupal VM recommends: Vagrant 2.0.x, VirtualBox 5.2.x, and Ansible 2.4.x*
 
-    docker -H $HOST:2375 attach drupalvm
-Unless you're on a home/private LAN, you should enable TLS access.
+### 2 - Build the Virtual Machine
 
-## Managing your hosts file
+  1. Download this project and put it wherever you want.
+  2. (Optional) Copy `default.config.yml` to `config.yml` and modify it to your liking.
+  3. Create a local directory where Drupal will be installed and configure the path to that directory in `config.yml` (`local_path`, inside `vagrant_synced_folders`).
+  4. Open Terminal, `cd` to this directory (containing the `Vagrantfile` and this README file).
+  5. Type in `vagrant up`, and let Vagrant do its magic.
 
-Before using Docker to run Drupal VM, you should [edit your hosts file](https://support.rackspace.com/how-to/modify-your-hosts-file/) and add the following line:
+Once the process is complete, you will have a Drupal codebase available inside the `drupal/` directory of the project.
 
-    192.168.89.89  drupalvm.test
+Note: *If there are any errors during the course of running `vagrant up`, and it drops you back to your command prompt, just run `vagrant provision` to continue building the VM from where you left off. If there are still errors after doing this a few times, post an issue to this project's issue queue on GitHub with the error.*
 
-(Substitute the IP address and domain name you'd like to use to access your Drupal VM container.)
+### 3 - Access the VM.
 
-You can also add other subdomains if you're using other built-in services, e.g. `adminer.drupalvm.test`, `xhprof.drupalvm.com`, etc.
+Open your browser and access [http://drupalvm.test/](http://drupalvm.test/). The default login for the admin account is `admin` for both the username and password.
 
-> If you're using Docker for Mac, you need to perform one additional step to ensure you can access Drupal VM using a unique IP address:
->
->   1. Add an alias IP address on the loopback interface: `sudo ifconfig lo0 alias 192.168.89.89/24`
->   2. When you're finished using the container, delete the alias: `sudo ifconfig lo0 -alias 192.168.89.89` (or restart your Mac).
->
-> You'll have to create the alias again after restarting your Mac. See [this Docker (moby) issue](https://github.com/moby/moby/issues/22753#issuecomment-246054946) for more details.
+Note: *By default Drupal VM is configured to use `192.168.88.88` as its IP, if you're running multiple VM's the `auto_network` plugin (`vagrant plugin install vagrant-auto_network`) can help with IP address management if you set `vagrant_ip` to `0.0.0.0` inside `config.yml`.*
 
-## Method 1: Get a quick Drupal site installed with Drupal VM's Docker image
+## Extra software/utilities
 
-If you just want a quick, easy Drupal site for testing, you can run an instance of Drupal VM and install Drupal inside using the provided script.
+By default, this VM includes the extras listed in the `config.yml` option `installed_extras`:
 
-  1. Run an instance of Drupal VM: `docker run -d -p 80:80 -p 443:443 --name=drupalvm --privileged geerlingguy/drupal-vm`
-  2. Install Drupal on this instance: `docker exec drupalvm install-drupal` (you can choose a version using `install-drupal [version]`, using versions like `8.x-dev` or `7.x-dev`).
+    installed_extras:
+      - adminer
+      # - blackfire
+      # - drupalconsole
+      - drush
+      # - elasticsearch
+      # - java
+      - mailhog
+      # - memcached
+      # - newrelic
+      # - nodejs
+      - pimpmylog
+      # - redis
+      # - ruby
+      # - selenium
+      # - solr
+      # - tideways
+      # - upload-progress
+      - varnish
+      # - xdebug
+      # - xhprof
 
-You should be able to access the Drupal site at `http://localhost`. If you need to share a host directory into the VM, you can do so by adding another `-v` parameter, like `-v /path/on/host:/path/in/container.
+If you don't want or need one or more of these extras, just delete them or comment them from the list. This is helpful if you want to reduce PHP memory usage or otherwise conserve system resources.
 
-If you only need a container to run your site, and you want to package up the container configuration with your project, you can add a Docker Compose file to your project's docroot like the following:
+## Using Drupal VM
 
-    ```yaml
-    version: "3"
-    
-    services:
-    
-      myproject:
-        image: geerlingguy/drupal-vm
-        container_name: myproject
-        ports:
-          - 80:80
-          - 443:443
-        privileged: true
-        volumes:
-          - ./:/var/www/drupalvm/drupal/web/:rw,delegated
-          - /var/lib/mysql
-          - /sys/fs/cgroup:/sys/fs/cgroup:ro
-        command: /lib/systemd/systemd
-    ```
+Drupal VM is built to integrate with every developer's workflow. Many guides for using Drupal VM for common development tasks are available on the [Drupal VM documentation site](http://docs.drupalvm.com).
 
-Then, run `docker-compose up -d` to bring up the container.
+## Updating Drupal VM
 
-For an example use of the simple approach for a contributed module's local development environment, see the Honeypot module, where this approach was added in [Add local test environment configuration](https://www.drupal.org/node/2885488).
+Drupal VM follows semantic versioning, which means your configuration should continue working (potentially with very minor modifications) throughout a major release cycle. Here is the process to follow when updating Drupal VM between minor releases:
 
-If you need more flexibility, though, you use one of the other Docker container methods on this page.
+  1. Read through the [release notes](https://github.com/geerlingguy/drupal-vm/releases) and add/modify `config.yml` variables mentioned therein.
+  2. Do a diff of your `config.yml` with the updated `default.config.yml` (e.g. `curl https://raw.githubusercontent.com/geerlingguy/drupal-vm/master/default.config.yml | git diff --no-index config.yml -`).
+  3. Run `vagrant provision` to provision the VM, incorporating all the latest changes.
 
-## Method 2: Build a default Drupal VM instance with Docker
+For major version upgrades (e.g. 2.x.x to 3.x.x), it may be simpler to destroy the VM (`vagrant destroy`) then build a fresh new VM (`vagrant up`) using the new version of Drupal VM.
 
-The [`geerlingguy/drupal-vm`](https://hub.docker.com/r/geerlingguy/drupal-vm/) image on Docker Hub contains a pre-built copy of Drupal VM, with all the latest Drupal VM defaults. If you need to quickly run your site in a container, or don't need to customize any of the components of Drupal VM, you can use this image.
+## System Requirements
 
-> For a reference installation that has configuration for running the local environment on _either_ Vagrant or Docker, see the [Drupal VM Live Site Repository](https://github.com/geerlingguy/drupalvm-live).
+Drupal VM runs on almost any modern computer that can run VirtualBox and Vagrant, however for the best out-of-the-box experience, it's recommended you have a computer with at least:
 
-### (Optional) Add a `Dockerfile` for customization
+  - Intel Core processor with VT-x enabled
+  - At least 4 GB RAM (higher is better)
+  - An SSD (for greater speed with synced folders)
 
-If you need to make small changes to the official `drupal-vm` image (instead of baking your own fully-custom image), you can create a `Dockerfile` to make those changes. In one site's example, ImageMagick was required for some media handling functionality, and so the following `Dockerfile` was placed in the project's root directory (alongside the `docker-compose.yml` file):
+## Other Notes
 
-    FROM geerlingguy/drupal-vm:latest
-    LABEL maintainer="Jeff Geerling"
-    
-    # Install imagemagick.
-    RUN apt-get install -y imagemagick
-    
-    EXPOSE 80 443 3306 8025
+  - To shut down the virtual machine, enter `vagrant halt` in the Terminal in the same folder that has the `Vagrantfile`. To destroy it completely (if you want to save a little disk space, or want to rebuild it from scratch with `vagrant up` again), type in `vagrant destroy`.
+  - To log into the virtual machine, enter `vagrant ssh`. You can also get the machine's SSH connection details with `vagrant ssh-config`.
+  - When you rebuild the VM (e.g. `vagrant destroy` and then another `vagrant up`), make sure you clear out the contents of the `drupal` folder on your host machine, or Drupal will return some errors when the VM is rebuilt (it won't reinstall Drupal cleanly).
+  - You can change the installed version of Drupal or drush, or any other configuration options, by editing the variables within `config.yml`.
+  - Find out more about local development with Vagrant + VirtualBox + Ansible in this presentation: [Local Development Environments - Vagrant, VirtualBox and Ansible](http://www.slideshare.net/geerlingguy/local-development-on-virtual-machines-vagrant-virtualbox-and-ansible).
+  - Learn about how Ansible can accelerate your ability to innovate and manage your infrastructure by reading [Ansible for DevOps](http://www.ansiblefordevops.com/).
 
-You can customize the official image in many other ways, but if you end up doing more than a step or two in a `Dockerfile`, it's probably a better idea to 'bake your own' Drupal VM Docker image.
+## Tests
 
-### Add a `docker-compose.yml` file
+To run basic integration tests using Docker:
 
-Copy the `example.docker-compose.yml` file out of Drupal VM (or grab a copy from GitHub [here](https://github.com/geerlingguy/drupal-vm/blob/master/example.docker-compose.yml)), rename it `docker-compose.yml`, and place it in your project root.
+  1. [Install Docker](https://docs.docker.com/engine/installation/).
+  2. In this project directory, run: `composer run-tests`
 
-  - _If you are using your own `Dockerfile` to further customize Drupal VM_, comment out the `image: drupal-vm` line, and uncomment the `build: .` line (this tells Docker Compose to build a new image based on your own `Dockerfile`).
+> Note: If you're on a Mac, you need to use [Docker's Edge release](https://docs.docker.com/docker-for-mac/install/#download-docker-for-mac), at least until [this issue](https://github.com/docker/for-mac/issues/77) is resolved.
 
-For the `volume:` definition in `docker-compose.yml`, Drupal VM's default docroot is `/var/www/drupalvm/drupal/web`, which follows the convention of a typical Drupal project built with Composer. If you don't get your site when you attempt to access Drupal VM, you will either need to modify the `volume:` definition to match your project's structure, or use a custom `Dockerfile` and copy in a customized Apache `vhosts.conf` file.
+The project's automated tests are run via Travis CI, and the more comprehensive test suite covers multiple Linux distributions and many different Drupal VM use cases and deployment techniques.
 
-You should also add a volume for MySQL data, otherwise MySQL may not start up correctly. By default, you should have a volume for `/var/lib/mysql` (no need to sync it locally). See Drupal VM's example docker-compose file for reference.
+## License
 
-### Run Drupal VM
+This project is licensed under the MIT open source license.
 
-Run the command `docker-compose up -d` (the `-d` tells `docker-compose` to start the containers and run in the background).
+## About the Author
 
-This command takes the instructions in the Docker Compose file and does two things:
-
-  1. Creates a custom Docker network that exposes Drupal VM on the IP address you have configured in `docker-compose.yml` (by default, `192.168.89.89`).
-  2. Runs Drupal VM using the configuration in `docker-compose.yml`.
-
-After the Drupal VM container is running, you should be able to see the Dashboard page at the VM's IP address (e.g. `http://192.168.89.89`), and you should be able to access your site at the hostname you have configured in your hosts file (e.g. `http://drupalvm.test/`).
-
-> Note: If you see Drupal's installer appear when accessing the site, that means the codebase was found, but either the database connection details are not in your local site configuration, or they are, but you don't have the default database populated yet. You may need to load in the database either via `drush sql-sync` or by importing a dump into the container. The default credentials are `drupal` and `drupal` for username and password, and `drupal` for the database name.
-
-You can stop the container with `docker-compose stop` (and start it again with `docker-compose start`), or remove all the configuration with `docker-compose down` (warning: this will also wipe out the database and other local container modifications).
-
-### Using Drush inside Docker
-
-Currently, the easiest way to use Drupal VM's `drush` inside a Docker container is to use `docker exec` to run `drush` internally. There are a few other ways you can try to get Drush working with a codebase running on a container, but the easiest way is to run a command like:
-
-    docker exec drupal-vm bash -c "drush --uri=drupalvm.test --root=/var/www/drupalvm/drupal/web status"
-
-## Method 3: 'Bake and Share' a custom Drupal VM Docker image
-
-If you need a more customized Drupal VM instance, it's best to build your own with Drupal VM's built-in Docker scripts.
-
-### Building ('baking') a Docker container with Drupal VM
-
-After you've configured your Drupal VM settings in `config.yml` and other configuration files, run the following command to create and provision a new Docker container:
-
-    composer docker-bake
-
-This will bake a Docker images using Drupal VM's default settings for distro, IP address, hostname, etc. You can override these options (all are listed in the `provisioning/docker/bake.sh` file) by prepending them to the `composer` command:
-
-    DRUPALVM_IP_ADDRESS='192.168.89.89' DISTRO='debian9' composer docker-bake
-
-This process can take some time (it should take a similar amount of time as it takes to build Drupal VM normally, using Vagrant and VirtualBox), and at the end, you should see a message like:
-
-```
-PLAY RECAP *********************************************************************
-localhost                  : ok=210  changed=94   unreachable=0    failed=0
-
-
-...done!
-
-Visit the Drupal VM dashboard: http://192.168.89.89:80
-```
-
-Once the build is complete, you can view the dashboard by visiting the URL provided.
-
-### Saving the Docker container to an image
-
-If you are happy with the way the container was built, you can run the following command to convert the container into an image:
-
-    composer docker-save-image
-
-You can override the default values for the image creation by overriding the following three variables inside `config.yml`:
-
-    docker_container_name: drupal-vm
-    docker_image_name: drupal-vm
-    docker_image_path: ~/Downloads
-
-Using the default settings, this command will tag your current version of the container as `drupal-vm:latest` (on your local computer), then store an archive of the image in an archive file, in the path "`docker_image_path`/`docker_image_name`.tar.gz".
-
-### Loading the Docker container from an image
-
-On someone else's computer (or your own, if you have deleted the existing `drupal-vm` image), you can load an archived image by placing it in the path defined by "`docker_image_path`/`docker_image_name`.tar.gz" in your `config.yml` file. To do this, run the command:
-
-    composer docker-load-image
-
-### Using a baked Drupal VM image with `docker-compose.yml`
-
-Drupal VM includes an `example.docker-compose.yml` file. To use the file, copy it to `docker-compose.yml` and customize as you see fit, making sure to change the `image` to the value of `docker_image_name` (the default is `drupal-vm`). Once you've configured the exposed ports and settings as you like, run the following command to bring up the network and container(s) according to the compose file:
-
-    docker-compose up -d
-
-(The `-d` tells `docker-compose` to start the containers and run in the background.) You can stop the container with `docker-compose stop` (and start it again with `docker-compose start`), or remove all the configuration with `docker-compose down` (warning: this will also wipe out the database and other local container modifications).
+[Jeff Geerling](https://www.jeffgeerling.com/) created Drupal VM in 2014 for a more efficient Drupal site and core/contrib development workflow. This project is featured as an example in [Ansible for DevOps](https://www.ansiblefordevops.com/).
