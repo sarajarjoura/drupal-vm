@@ -1,0 +1,6 @@
+---
+
+# Docker configuration.
+docker_container_name: drupal-vm
+docker_image_name: drupal-vm
+docker_image_path: ~/Downloads

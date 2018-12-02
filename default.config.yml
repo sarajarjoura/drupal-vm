@@ -1,50 +1,4 @@
 ---
-# Available `vagrant_box` values include:
-#   - beet/box (pre-provisioned, based on Ubuntu 16.04)
-#   - geerlingguy/drupal-vm (pre-provisioned, based on Ubuntu 16.04)
-#   - geerlingguy/centos7
-#   - geerlingguy/centos6
-#   - geerlingguy/debian9
-#   - geerlingguy/debian8
-#   - geerlingguy/ubuntu1804
-#   - geerlingguy/ubuntu1604
-vagrant_box: geerlingguy/drupal-vm
-
-vagrant_user: vagrant
-vagrant_synced_folder_default_type: nfs
-vagrant_gui: false
-
-# If you need to run multiple instances of Drupal VM, set a unique hostname,
-# machine name, and IP address for each instance.
-vagrant_hostname: drupalvm.test
-vagrant_machine_name: drupalvm
-vagrant_ip: 192.168.88.88
-
-# Allow Drupal VM to be accessed via a public network interface on your host.
-# Vagrant boxes are insecure by default, so be careful. You've been warned!
-# See: https://docs.vagrantup.com/v2/networking/public_network.html
-vagrant_public_ip: ""
-
-# A list of synced folders, with the keys 'local_path', 'destination', and
-# a 'type' of [nfs|rsync|smb] (leave empty for slow native shares). See
-# http://docs.drupalvm.com/en/latest/getting-started/syncing-folders/ for more.
-vagrant_synced_folders:
-  # The first synced folder will be used for the default Drupal installation, if
-  # any of the build_* settings are 'true'. By default the folder is set to
-  # the drupal-vm folder.
-  - local_path: .
-    destination: /var/www/drupalvm
-    type: nfs
-    create: true
-
-# Memory and CPU to use for this VM.
-vagrant_memory: 2048
-vagrant_cpus: 1
-
-# Ensure vagrant plugins are installed.
-vagrant_plugins:
-  - name: vagrant-vbguest
-  - name: vagrant-hostsupdater
 
 # Minimum required versions.
 drupalvm_vagrant_version_min: '1.8.6'
@@ -336,11 +290,6 @@ solr_xmx: "128M"
 
 # Selenium configuration.
 selenium_version: 2.53.0
-
-# Docker configuration.
-docker_container_name: drupal-vm
-docker_image_name: drupal-vm
-docker_image_path: ~/Downloads
 
 # Other configuration.
 dashboard_install_dir: /var/www/dashboard
