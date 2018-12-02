@@ -27,11 +27,13 @@ To use the latest stable version with http and mysql, run
 where the standard server ports, 80 and 3306, will be exposed on your host machine.
 
 If you want to use an alternate port, change the port mapping such as 
+
     docker run -p 8080:80 ...
-will serve your Minecraft server on your host's port 8080 since the -p syntax is
+will serve your server on your host's port 8080 since the -p syntax is
 host-port:container-port.
 
 Make sure to give your containers explicit names using --name, such as
+
     docker run -d -p 8080:80 --name drupalvm geerlingguy/drupal-vm
 
 To view the logs, stop, or re-start the container:
