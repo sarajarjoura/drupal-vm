@@ -1,10 +1,75 @@
-Drupal VM can be used with [Docker](https://www.docker.com) instead of or in addition to Vagrant:
+![Drupal VM Logo](https://raw.githubusercontent.com/geerlingguy/drupal-vm/master/docs/images/drupal-vm-logo.png)
+
+[![Build Status](https://travis-ci.org/geerlingguy/drupal-vm.svg?branch=master)](https://travis-ci.org/geerlingguy/drupal-vm) [![Documentation Status](https://readthedocs.org/projects/drupal-vm/badge/?version=latest)](http://docs.drupalvm.com) [![Packagist](https://img.shields.io/packagist/v/geerlingguy/drupal-vm.svg)](https://packagist.org/packages/geerlingguy/drupal-vm) [![Docker Automated build](https://img.shields.io/docker/automated/geerlingguy/drupal-vm.svg?maxAge=2592000)](https://hub.docker.com/r/geerlingguy/drupal-vm/) [![](https://images.microbadger.com/badges/image/geerlingguy/drupal-vm.svg)](https://microbadger.com/images/geerlingguy/drupal-vm "Get your own image badge on microbadger.com") [![irc://irc.freenode.net/drupal-vm](https://img.shields.io/badge/irc.freenode.net-%23drupal--vm-brightgreen.svg)](https://riot.im/app/#/room/#drupal-vm:matrix.org)
+
+[Drupal VM](https://www.drupalvm.com/) is a VM for Drupal, built with Ansible.
+
+Drupal VM makes building Drupal development environments quick and easy, and introduces developers to the wonderful world of Drupal development on virtual machines or Docker containers (instead of crufty old MAMP/WAMP-based development).
+
+There are two ways you can use Drupal VM:
+
+  1. With Vagrant and VirtualBox.
+  2. With Docker.
+
+To read more about using Drupal VM with Vagrant, please read the [Drupal VM Vagrant documentation](http://docs.drupalvm.com/en/latest/docs/vagrant).
 
   - You can quickly install a Drupal site (any version) using the official [`geerlingguy/drupal-vm`](https://hub.docker.com/r/geerlingguy/drupal-vm/) image.
   - You can build a customized local instance using Docker, pulling the official [`geerlingguy/drupal-vm`](https://hub.docker.com/r/geerlingguy/drupal-vm/) image.
   - You can 'bake your own' customized Drupal VM Docker image and reuse it or share it with your team.
 
 > **Docker support is currently experimental**, so unless you're already familiar with Docker, it might be best to wait until later versions of Drupal VM are released with more stable support.
+
+## Using the latest
+
+To use the latest stable version with http and mysql, run
+
+    docker run -d -p 80:80 -p 3306:3306 --name drupalvm geerlingguy/drupal-vm
+where the standard server ports, 80 and 3306, will be exposed on your host machine.
+
+If you want to use an alternate port, change the port mapping such as 
+    docker run -p 8080:80 ...
+will serve your Minecraft server on your host's port 8080 since the -p syntax is
+host-port:container-port.
+
+Make sure to give your containers explicit names using --name, such as
+    docker run -d -p 8080:80 --name drupalvm geerlingguy/drupal-vm
+
+To view the logs, stop, or re-start the container:
+
+    docker logs -f drupalvm
+        ( Ctrl-C to exit logs action )
+
+    docker stop drupalvm
+
+    docker start drupalvm
+
+## Interacting with the server
+To get access to the command line, you can exec into the container::
+
+    docker exec -i drupalvm /bin/bash
+Note: The -i is required for interactive use of the bash terminal.
+
+## Single Command
+To run a simple, one-shot command, such as printing your working directory, pass the command as
+arguments to bash, such as:
+
+    docker exec drupalvm /bin/bash -c "pwd"
+The -i is not needed in this case.
+
+## Interacting with the Server
+In order to attach and interact with the server, add -it when starting the container, such as
+
+    docker run -d -it -p 80:80 -p 3306:3306 --name drupalvm geerlingguy/drupal-vm
+With that you can attach and interact at any time using
+
+    docker attach drupalvm
+and then Control-p Control-q to detach.
+
+For remote access, configure your Docker daemon to use a tcp socket (such as -H tcp://0.0.0.0:2375)
+and attach from another machine:
+
+    docker -H $HOST:2375 attach drupalvm
+Unless you're on a home/private LAN, you should enable TLS access.
 
 ## Managing your hosts file
 
